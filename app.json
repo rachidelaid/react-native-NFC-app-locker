@@ -18,7 +18,11 @@
         "backgroundColor": "#28282a"
       },
       "package": "com.anonymous.app_lock",
-      "permissions": ["android.permission.NFC"]
+      "permissions": [
+        "android.permission.NFC",
+        "android.permission.QUERY_ALL_PACKAGES",
+        "android.permission.BIND_ACCESSIBILITY_SERVICE"
+      ]
     },
     "web": {
       "bundler": "metro",

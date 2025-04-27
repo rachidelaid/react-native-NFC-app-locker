@@ -1,16 +1,21 @@
 import { View, Text, Pressable, StyleSheet } from "react-native";
-import React, { useState } from "react";
+import React, { useState, useCallback } from "react";
 import Logo from "./Logo";
 import { colors } from "@/constants/colors";
 import ReadyToScan from "./ReadyToScan";
 import * as SecureStore from "expo-secure-store";
-
+import Settings from "./Settings";
 async function save(value: string) {
   await SecureStore.setItemAsync("key", value);
 }
 
 const Unlocked = ({ setState }: { setState: (state: string) => void }) => {
   const [readyToScan, setReadyToScan] = useState(false);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+
+  const handlePresentModalPress = useCallback(() => {
+    setIsModalOpen(true);
+  }, []);
 
   return (
     <>
@@ -29,7 +34,7 @@ const Unlocked = ({ setState }: { setState: (state: string) => void }) => {
             <Text style={styles.buttonText}>LOCK IT</Text>
           </Pressable>
 
-          <Pressable onPress={() => {}}>
+          <Pressable onPress={handlePresentModalPress}>
             <Text style={styles.settings}>SETTINGS</Text>
           </Pressable>
         </View>
@@ -46,6 +51,7 @@ const Unlocked = ({ setState }: { setState: (state: string) => void }) => {
           }}
         />
       )}
+      {isModalOpen && <Settings onClose={() => setIsModalOpen(false)} />}
     </>
   );
 };
