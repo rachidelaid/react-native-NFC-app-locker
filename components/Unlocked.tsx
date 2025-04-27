@@ -1,31 +1,52 @@
 import { View, Text, Pressable, StyleSheet } from "react-native";
-import React from "react";
+import React, { useState } from "react";
 import Logo from "./Logo";
 import { colors } from "@/constants/colors";
+import ReadyToScan from "./ReadyToScan";
+import * as SecureStore from "expo-secure-store";
+
+async function save(value: string) {
+  await SecureStore.setItemAsync("key", value);
+}
 
 const Unlocked = ({ setState }: { setState: (state: string) => void }) => {
+  const [readyToScan, setReadyToScan] = useState(false);
+
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>JAIL IT</Text>
+    <>
+      <View style={styles.container}>
+        <Text style={styles.title}>JAIL IT</Text>
 
-      <View style={styles.content}>
-        <Logo />
-        <Text style={{ marginTop: 20, ...styles.subtitle }}>
-          Your phone is currently jailed.
-        </Text>
-        <Text style={styles.subtitle}>To unlock it, tap your key.</Text>
+        <View style={styles.content}>
+          <Logo />
+          <Text style={{ marginTop: 19, ...styles.subtitle }}>
+            Tap your key to lock it.
+          </Text>
+        </View>
+
+        <View style={styles.content}>
+          <Pressable style={styles.button} onPress={() => setReadyToScan(true)}>
+            <Text style={styles.buttonText}>LOCK IT</Text>
+          </Pressable>
+
+          <Pressable onPress={() => {}}>
+            <Text style={styles.settings}>SETTINGS</Text>
+          </Pressable>
+        </View>
       </View>
-
-      <View style={styles.content}>
-        <Pressable style={styles.button} onPress={() => setState("locked")}>
-          <Text style={styles.buttonText}>LOCK IT</Text>
-        </Pressable>
-
-        <Pressable onPress={() => {}}>
-          <Text style={styles.settings}>SETTINGS</Text>
-        </Pressable>
-      </View>
-    </View>
+      {readyToScan && (
+        <ReadyToScan
+          onClick={(id: string) => {
+            save(id);
+            setState("locked");
+            setReadyToScan(false);
+          }}
+          onCancel={() => {
+            setReadyToScan(false);
+          }}
+        />
+      )}
+    </>
   );
 };
 

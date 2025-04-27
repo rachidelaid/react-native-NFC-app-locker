@@ -1,26 +1,30 @@
 import Locked from "@/components/Locked";
-import ReadyToScan from "@/components/ReadyToScan";
 import Unlocked from "@/components/Unlocked";
 import { colors } from "@/constants/colors";
 import { useFonts } from "expo-font";
 import * as SplashScreen from "expo-splash-screen";
 import { useEffect, useState } from "react";
 import { View, StyleSheet } from "react-native";
+import { StatusBar } from "expo-status-bar";
 import "react-native-reanimated";
-
+import * as SecureStore from "expo-secure-store";
+import Logo from "@/components/Logo";
 // Prevent the splash screen from auto-hiding before asset loading is complete.
 SplashScreen.preventAutoHideAsync();
+
+async function getKey() {
+  let result = await SecureStore.getItemAsync("key");
+  return result;
+}
 
 export default function RootLayout() {
   const [loaded] = useFonts({
     SpaceMono: require("../assets/fonts/SpaceGrotesk.ttf"),
   });
 
-  const [state, setState] = useState("locked");
+  const [checkKey, setCheckKey] = useState<boolean | null>(null);
 
-  useEffect(() => {
-    console.log("state ====>", state);
-  }, [state]);
+  const [state, setState] = useState("unlocked");
 
   useEffect(() => {
     if (loaded) {
@@ -28,21 +32,37 @@ export default function RootLayout() {
     }
   }, [loaded]);
 
-  if (!loaded) {
-    return null;
+  useEffect(() => {
+    getKey().then((key) => {
+      setCheckKey(!!key);
+
+      if (!key) {
+        setState("unlocked");
+      } else {
+        setState("locked");
+      }
+    });
+  }, []);
+
+  if (!loaded || checkKey === null) {
+    return (
+      <View style={styles.container}>
+        <Logo />
+      </View>
+    );
   }
 
   return (
-    <View style={styles.container}>
-      {["locked", "readyToScan"].includes(state) ? (
-        <>
+    <>
+      <View style={styles.container}>
+        {state === "locked" ? (
           <Locked setState={setState} />
-          {state === "readyToScan" && <ReadyToScan setState={setState} />}
-        </>
-      ) : (
-        <Unlocked setState={setState} />
-      )}
-    </View>
+        ) : (
+          <Unlocked setState={setState} />
+        )}
+      </View>
+      <StatusBar style="light" />
+    </>
   );
 }
 

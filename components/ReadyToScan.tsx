@@ -3,45 +3,97 @@ import React, { useEffect, useState } from "react";
 import { colors } from "@/constants/colors";
 import NfcManager, { NfcTech } from "react-native-nfc-manager";
 
-NfcManager.start();
-
-const ReadyToScan = ({ setState }: { setState: (state: string) => void }) => {
-  const [tag, setTag] = useState<any>(null);
-  async function readNdef() {
-    try {
-      // register for the NFC tag with NDEF in it
-      await NfcManager.requestTechnology(NfcTech.Ndef);
-      // the resolved tag object will contain `ndefMessage` property
-      const tag = await NfcManager.getTag();
-      console.warn("Tag found", tag);
-      setTag(tag);
-    } catch (ex) {
-      console.warn("Oops!", ex);
-      setTag(ex);
-    } finally {
-      // stop the nfc scanning
-      NfcManager.cancelTechnologyRequest();
-    }
-  }
+const ReadyToScan = ({
+  onClick,
+  onCancel,
+}: {
+  onClick: (key: string, cb?: (msg: string) => void) => void;
+  onCancel: () => void;
+}) => {
+  const [hasNfc, setHasNFC] = useState<boolean | null>(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
+    async function readNdef() {
+      setError(null);
+      if (!hasNfc) return;
+
+      try {
+        NfcManager.start();
+        // Ensure no previous technology requests are active
+        await NfcManager.cancelTechnologyRequest();
+
+        // register for the NFC tag with NDEF in it
+        await NfcManager.requestTechnology([
+          NfcTech.NfcA,
+          NfcTech.MifareClassic,
+          NfcTech.NdefFormatable,
+        ]);
+        // the resolved tag object will contain `ndefMessage` property
+        const tag = await NfcManager.getTag();
+
+        onClick(tag?.id ?? "", (msg: string) => {
+          setError(msg);
+        });
+
+        NfcManager.cancelTechnologyRequest();
+      } catch (ex) {
+        console.warn("Oops!", ex);
+        setError("Oops! Something went wrong");
+      } finally {
+        // stop the nfc scanning
+        NfcManager.cancelTechnologyRequest();
+      }
+    }
     readNdef();
   }, []);
 
+  // useEffect(() => {
+  //   const checkIsSupported = async () => {
+  //     const deviceIsSupported = await NfcManager.isSupported();
+
+  //     setHasNFC(deviceIsSupported);
+  //     if (deviceIsSupported) {
+  //       await NfcManager.start();
+  //     }
+  //   };
+
+  //   checkIsSupported();
+  // }, []);
+
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>Ready to Scan</Text>
-      <Image
-        source={require("@/assets/images/contactless-payment.png")}
-        style={styles.image}
-      />
-      <Text style={styles.subtitle}>
-        {/* Tap the top of your phone to scan your key. */}
-        {tag ? JSON.stringify(tag) : "No tag found"}
-      </Text>
-      <Pressable style={styles.button} onPress={() => setState("locked")}>
-        <Text style={styles.buttonText}>CANCEL</Text>
-      </Pressable>
+    <View style={{ ...styles.container, height: !!hasNfc ? "50%" : "20%" }}>
+      {!!hasNfc ? (
+        <>
+          <Text style={styles.title}>Ready to Scan</Text>
+          <Image
+            source={require("@/assets/images/contactless-payment.png")}
+            style={styles.image}
+          />
+          <Text style={styles.subtitle}>
+            Tap the top of your phone to scan your key.
+          </Text>
+          {!!error && (
+            <Text style={{ ...styles.subtitle, color: "#c03841" }}>
+              {error}
+            </Text>
+          )}
+          <Pressable style={styles.button} onPress={onCancel}>
+            <Text style={styles.buttonText}>CANCEL</Text>
+          </Pressable>
+        </>
+      ) : (
+        <>
+          <Text
+            style={{ ...styles.subtitle, marginTop: "auto", marginBottom: 20 }}
+          >
+            NFC is not supported on this device
+          </Text>
+          <Pressable style={styles.button} onPress={onCancel}>
+            <Text style={styles.buttonText}>CANCEL</Text>
+          </Pressable>
+        </>
+      )}
     </View>
   );
 };
@@ -57,7 +109,6 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     bottom: 0,
-    height: "50%",
     borderTopStartRadius: 30,
     borderTopEndRadius: 30,
   },
