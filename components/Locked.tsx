@@ -3,12 +3,8 @@ import React, { useState } from "react";
 import Logo from "./Logo";
 import { colors } from "@/constants/colors";
 import ReadyToScan from "./ReadyToScan";
-import * as SecureStore from "expo-secure-store";
+import { getData, deleteData } from "@/utils/secureStorage";
 
-async function getKey() {
-  let result = await SecureStore.getItemAsync("key");
-  return result;
-}
 const Locked = ({ setState }: { setState: (state: string) => void }) => {
   const [readyToScan, setReadyToScan] = useState(false);
 
@@ -26,10 +22,10 @@ const Locked = ({ setState }: { setState: (state: string) => void }) => {
       {readyToScan && (
         <ReadyToScan
           onClick={async (id: string, cb?: (msg: string) => void) => {
-            const storedKey = await getKey();
+            const storedKey = await getData("key");
 
             if (id === storedKey) {
-              SecureStore.deleteItemAsync("key");
+              await deleteData("key");
               setState("unlocked");
               setReadyToScan(false);
             } else {

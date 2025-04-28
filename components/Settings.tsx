@@ -1,4 +1,4 @@
-import { Text, StyleSheet, View, Image } from "react-native";
+import { Text, StyleSheet, View, Image, Switch } from "react-native";
 import React, { useRef, useCallback, useEffect, useState } from "react";
 import { InstalledApps } from "react-native-launcher-kit";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
@@ -7,31 +7,42 @@ import {
   BottomSheetView,
   BottomSheetModalProvider,
   BottomSheetFlatList,
+  BottomSheetScrollView,
 } from "@gorhom/bottom-sheet";
 import { colors } from "@/constants/colors";
+import { getData, setData } from "@/utils/secureStorage";
 
 interface InstalledApp {
   icon: string;
   label: string;
   packageName: string;
+  checked: boolean;
 }
 
 const Settings = ({ onClose }: { onClose: () => void }) => {
   // ref
   const bottomSheetModalRef = useRef<BottomSheetModal>(null);
-  const [installedApps, setInstalledApps] = useState<InstalledApp[] | null>(
-    null
-  );
+  const [installedApps, setInstalledApps] = useState<
+    InstalledApp[] | undefined
+  >(undefined);
 
   const getInstalledApps = async () => {
+    const data = await getData("apps");
+    const savedApps = data ? JSON.parse(data) : [];
+
     const result = await InstalledApps.getSortedApps();
-    setInstalledApps(result as unknown as InstalledApp[]);
+    setInstalledApps(
+      result.map((app) => ({
+        ...app,
+        checked: savedApps.includes(app.packageName),
+      }))
+    );
   };
 
   const handleSheetChanges = useCallback((index: number) => {
     if (index === -1) {
       onClose?.();
-      setInstalledApps(null);
+      setInstalledApps(undefined);
       bottomSheetModalRef.current?.dismiss();
     }
   }, []);
@@ -40,9 +51,24 @@ const Settings = ({ onClose }: { onClose: () => void }) => {
     if (bottomSheetModalRef.current) {
       bottomSheetModalRef.current.present();
       bottomSheetModalRef.current.snapToIndex(0);
+
       getInstalledApps();
     }
   }, [bottomSheetModalRef]);
+
+  const toggleSwitch = (id: string) => {
+    const newList = installedApps?.map((app) =>
+      app.packageName !== id ? app : { ...app, checked: !app.checked }
+    );
+
+    const checkedApps = newList
+      ?.filter((app) => app.checked)
+      .map((app) => app.packageName);
+
+    setData("apps", JSON.stringify(checkedApps));
+
+    setInstalledApps(newList);
+  };
 
   return (
     <GestureHandlerRootView style={styles.container}>
@@ -56,22 +82,28 @@ const Settings = ({ onClose }: { onClose: () => void }) => {
           handleIndicatorStyle={styles.handleIndicator}
           handleStyle={styles.handle}
           enableDynamicSizing={false}
+          enableOverDrag={false}
         >
           <BottomSheetView style={styles.contentContainer}>
-            {installedApps === null ? (
-              <Text style={styles.loading}>Loading...</Text>
-            ) : (
+            <BottomSheetScrollView>
               <BottomSheetFlatList
                 data={installedApps}
                 keyExtractor={(item) => item.packageName}
-                renderItem={({ item, index }) => (
+                renderItem={({ item }) => (
                   <View style={styles.appItem}>
+                    <Switch
+                      trackColor={{ false: colors.gray, true: "#005f02" }}
+                      thumbColor={item.checked ? "#00ee00" : colors.secondary}
+                      ios_backgroundColor={colors.gray}
+                      onValueChange={() => toggleSwitch(item.packageName)}
+                      value={item.checked}
+                    />
                     <Image source={{ uri: item.icon }} style={styles.appIcon} />
                     <Text style={styles.appName}>{item.label}</Text>
                   </View>
                 )}
               />
-            )}
+            </BottomSheetScrollView>
           </BottomSheetView>
         </BottomSheetModal>
       </BottomSheetModalProvider>
@@ -106,18 +138,20 @@ const styles = StyleSheet.create({
   appItem: {
     flexDirection: "row",
     alignItems: "center",
-    justifyContent: "center",
     width: "100%",
     padding: 10,
+    marginRight: "auto",
   },
   appIcon: {
-    width: 24,
-    height: 24,
+    width: 28,
+    height: 28,
     borderRadius: 100,
-    marginRight: 10,
+    marginRight: 20,
+    marginLeft: 10,
   },
   appName: {
     color: colors.white,
+    width: "99%",
   },
 });
 

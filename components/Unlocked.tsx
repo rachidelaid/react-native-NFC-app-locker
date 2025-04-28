@@ -3,11 +3,8 @@ import React, { useState, useCallback } from "react";
 import Logo from "./Logo";
 import { colors } from "@/constants/colors";
 import ReadyToScan from "./ReadyToScan";
-import * as SecureStore from "expo-secure-store";
 import Settings from "./Settings";
-async function save(value: string) {
-  await SecureStore.setItemAsync("key", value);
-}
+import { setData } from "@/utils/secureStorage";
 
 const Unlocked = ({ setState }: { setState: (state: string) => void }) => {
   const [readyToScan, setReadyToScan] = useState(false);
@@ -42,7 +39,7 @@ const Unlocked = ({ setState }: { setState: (state: string) => void }) => {
       {readyToScan && (
         <ReadyToScan
           onClick={(id: string) => {
-            save(id);
+            setData("key", id);
             setState("locked");
             setReadyToScan(false);
           }}
