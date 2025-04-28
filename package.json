@@ -9,7 +9,8 @@
     "web": "expo start --web",
     "test": "jest --watchAll",
     "lint": "expo lint",
-    "build": "npx eas build --platform android --local"
+    "build": "npx eas build --platform android --local",
+    "postinstall": "patch-package"
   },
   "jest": {
     "preset": "jest-expo"
