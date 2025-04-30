@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#28282a">
+
+    <LinearLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_centerInParent="true"
+        android:orientation="vertical"
+        android:gravity="center"
+        android:padding="24dp">
+
+        <TextView
+            android:id="@+id/title_text"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="THIS IS A DISTRACTION"
+            android:textSize="23sp"
+            android:textColor="#E3E3E5"
+            android:textStyle="bold"
+            android:layout_marginBottom="10dp" />
+
+        <TextView
+            android:id="@+id/subtitle_text1"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Your phone is currently jailed."
+            android:textSize="15sp"
+            android:textColor="#6E6E6E" />
+
+        <TextView
+            android:id="@+id/subtitle_text2"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="To unlock it, tap your key."
+            android:textSize="15sp"
+            android:textColor="#6E6E6E" />
+    </LinearLayout>
+</RelativeLayout>
